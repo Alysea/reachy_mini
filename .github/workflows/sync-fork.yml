@@ -14,11 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository != 'pollen-robotics/reachy_mini'
     steps:
-      - name: Sync default branch from upstream
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge upstream/main into fork
         run: |
-          gh repo sync "${{ github.repository }}" \
-            --source "pollen-robotics/reachy_mini" \
-            --branch "main" \
-            --force
+          git remote add upstream "https://github.com/pollen-robotics/reachy_mini.git"
+          git fetch upstream main
+          git -c user.name="fork-sync-bot" -c user.email="actions@users.noreply.github.com" \
+            merge --no-edit -m "Merge upstream/main into fork (scheduled sync)" upstream/main
+          git push origin "HEAD:main"
