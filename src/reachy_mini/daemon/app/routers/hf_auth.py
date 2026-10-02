@@ -1,7 +1,6 @@
 """HuggingFace authentication API routes."""
 
 import asyncio
-import html
 import logging
 from html import escape
 from typing import Any
@@ -350,7 +349,7 @@ async def get_device_oauth_status(session_id: str, request: Request) -> dict[str
         daemon = getattr(request.app.state, "daemon", None)
         if daemon is not None:
             try:
-                await daemon._start_central_signaling_relay()
+                await daemon.start_central_relay_if_running()
             except Exception as error:
                 logger.warning(
                     "[oauth/device] relay start failed (%s)", type(error).__name__
@@ -416,7 +415,7 @@ async def oauth_callback(
         daemon = getattr(request.app.state, "daemon", None)
         if daemon is not None:
             try:
-                await daemon._start_central_signaling_relay()
+                await daemon.start_central_relay_if_running()
             except Exception as error:
                 logger.warning(
                     "[oauth/callback] relay start failed (%s)", type(error).__name__
@@ -439,9 +438,6 @@ async def oauth_callback(
 
 def _oauth_result_page(success: bool, message: str) -> str:
     """Generate a simple HTML page showing OAuth result."""
-    # The message may contain attacker-controlled input (e.g. the OAuth
-    # `error_description` query parameter); escape it to prevent XSS.
-    message = html.escape(message, quote=True)
     icon = "✅" if success else "❌"
     title = "Login Successful" if success else "Login Failed"
     color = "#10b981" if success else "#ef4444"
